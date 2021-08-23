@@ -9,11 +9,13 @@ from students.models import Course
 @pytest.mark.django_db
 def test_get_one_course(api_client, course_factory):
     url = reverse("courses-list")
-    courses = course_factory(_quantity=1)
-    print(url)
+    courses = course_factory(_quantity=10)
     resp = api_client.get(url)
-    print(resp)
-    assert resp.status_code == 200
+    id = resp.data[0]['id']
+    name = resp.data[0]['name']
+    url2 =url + f'{id}/'
+    response = api_client.get(url2)
+    assert response.data['name'] == name
 
 @pytest.mark.django_db
 def test_get_all_courses(api_client, course_factory):
@@ -37,10 +39,12 @@ def test_filter_by_id(api_client, course_factory):
 def test_filter_by_name(api_client, course_factory):
     url = reverse("courses-list")
     courses = course_factory(_quantity=10)
-    response = api_client.post(url, data={"name": 'test_course', }, format='json')
-    assert response.status_code == 201
-    resp = api_client.get(url, {'name': '%test'})
-    assert resp.status_code == 200
+    response = api_client.get(url)
+    all_courses = response.data
+    test_course_name = all_courses[1]['name']
+    filter_name = api_client.get(url, {'name': test_course_name})
+    assert filter_name.data[0]['name'] == test_course_name
+    assert filter_name.status_code == 200
 
 
 @pytest.mark.django_db
